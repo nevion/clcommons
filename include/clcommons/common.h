@@ -74,7 +74,7 @@ uint get_local_linear_id(){
 
 #define ensure_lds_barrier() work_group_barrier(CLK_LOCAL_MEM_FENCE)
 
-#if defined(AMD_ARCH) || defined(NVIDIA_ARCH)
+#if defined(AMD_GPU_ARCH) || defined(NVIDIA_ARCH)
     #ifdef PROMISE_WG_IS_WAVEFRONT
         #define lds_barrier() assert(get_workgroup_size() <= DEVICE_WAVEFRONT_SIZE); mem_fence(CLK_LOCAL_MEM_FENCE);
     #else
