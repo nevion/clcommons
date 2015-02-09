@@ -78,7 +78,7 @@ uint get_local_linear_id(){
     #ifdef PROMISE_WG_IS_WAVEFRONT
         #define lds_barrier() assert(get_workgroup_size() <= DEVICE_WAVEFRONT_SIZE); mem_fence(CLK_LOCAL_MEM_FENCE);
     #else
-        #define lds_barrier() if(get_workgroup_size() >= DEVICE_WAVEFRONT_SIZE){ work_group_barrier(CLK_LOCAL_MEM_FENCE); }else{ mem_fence(CLK_LOCAL_MEM_FENCE); }
+        #define lds_barrier() if(get_workgroup_size() > DEVICE_WAVEFRONT_SIZE){ work_group_barrier(CLK_LOCAL_MEM_FENCE); }else{ mem_fence(CLK_LOCAL_MEM_FENCE); }
     #endif
 #else
 #define lds_barrier() ensure_lds_barrier()
