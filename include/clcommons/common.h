@@ -70,6 +70,8 @@ uint get_workgroup_size(){
 uint get_local_linear_id(){
     return get_local_id(0) + get_local_id(1) * get_local_size(0) + get_local_id(2) * get_local_size(0) * get_local_size(1);
 }
+
+#define atomic_load(p) atomic_or((p), 0)
 #endif
 
 #define ensure_lds_barrier() work_group_barrier(CLK_LOCAL_MEM_FENCE)
