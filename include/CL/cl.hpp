@@ -218,6 +218,7 @@
 #endif // __linux__
 
 #include <cstring>
+#include <utility>
 
 
 /*! \namespace cl
@@ -258,6 +259,7 @@ class Context;
 class CommandQueue;
 class Memory;
 class Buffer;
+class Event;
 
 #if defined(__CL_ENABLE_EXCEPTIONS)
 /*! \brief Exception class 
@@ -2645,6 +2647,14 @@ __attribute__((weak)) Context Context::default_;
 __attribute__((weak)) volatile cl_int Context::default_error_ = CL_SUCCESS;
 #endif
 
+typedef std::pair<Event *, ::size_t> event_list_t;
+#if __cplusplus > 199711L
+const constexpr event_list_t empty_event_list = event_list_t(nullptr, 0);
+#else
+#define empty_event_list event_list_t(nullptr, 0)
+#endif
+
+
 /*! \brief Class interface for cl_event.
  *
  *  \note Copies of these objects are shallow, meaning that the copy will refer
@@ -2784,11 +2794,11 @@ public:
      *  Wraps clWaitForEvents().
      */
     static cl_int
-    waitForEvents(const VECTOR_CLASS<Event>& events)
+    waitForEvents(const event_list_t events)
     {
         return detail::errHandler(
             ::clWaitForEvents(
-                (cl_uint) events.size(), (cl_event*)&events.front()),
+                (cl_uint) events.second, (cl_event*) events.first),
             __WAIT_FOR_EVENTS_ERR);
     }
 };
@@ -2853,11 +2863,11 @@ public:
  *  Wraps clWaitForEvents().
  */
 inline static cl_int
-WaitForEvents(const VECTOR_CLASS<Event>& events)
+WaitForEvents(const event_list_t& events)
 {
     return detail::errHandler(
         ::clWaitForEvents(
-            (cl_uint) events.size(), (cl_event*)&events.front()),
+            (cl_uint) events.second, (cl_event*) events.first),
         __WAIT_FOR_EVENTS_ERR);
 }
 
@@ -5216,7 +5226,7 @@ public:
         ::size_t offset,
         ::size_t size,
         void* ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5224,8 +5234,7 @@ public:
             ::clEnqueueReadBuffer(
                 object_, buffer(), blocking, offset, size,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_READ_BUFFER_ERR);
 
@@ -5241,7 +5250,7 @@ public:
         ::size_t offset,
         ::size_t size,
         const void* ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5249,8 +5258,7 @@ public:
             ::clEnqueueWriteBuffer(
                 object_, buffer(), blocking, offset, size,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_WRITE_BUFFER_ERR);
 
@@ -5266,15 +5274,14 @@ public:
         ::size_t src_offset,
         ::size_t dst_offset,
         ::size_t size,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
         cl_int err = detail::errHandler(
             ::clEnqueueCopyBuffer(
                 object_, src(), dst(), src_offset, dst_offset, size,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQEUE_COPY_BUFFER_ERR);
 
@@ -5295,7 +5302,7 @@ public:
         ::size_t host_row_pitch,
         ::size_t host_slice_pitch,
         void *ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5312,8 +5319,7 @@ public:
                 host_row_pitch,
                 host_slice_pitch,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_READ_BUFFER_RECT_ERR);
 
@@ -5334,7 +5340,7 @@ public:
         ::size_t host_row_pitch,
         ::size_t host_slice_pitch,
         void *ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5351,8 +5357,7 @@ public:
                 host_row_pitch,
                 host_slice_pitch,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_WRITE_BUFFER_RECT_ERR);
 
@@ -5372,7 +5377,7 @@ public:
         ::size_t src_slice_pitch,
         ::size_t dst_row_pitch,
         ::size_t dst_slice_pitch,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5388,8 +5393,7 @@ public:
                 src_slice_pitch,
                 dst_row_pitch,
                 dst_slice_pitch,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQEUE_COPY_BUFFER_RECT_ERR);
 
@@ -5412,7 +5416,7 @@ public:
         PatternType pattern,
         ::size_t offset,
         ::size_t size,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5424,8 +5428,7 @@ public:
                 sizeof(PatternType), 
                 offset, 
                 size,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_FILL_BUFFER_ERR);
 
@@ -5444,7 +5447,7 @@ public:
         ::size_t row_pitch,
         ::size_t slice_pitch,
         void* ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5452,8 +5455,7 @@ public:
             ::clEnqueueReadImage(
                 object_, image(), blocking, (const ::size_t *) origin,
                 (const ::size_t *) region, row_pitch, slice_pitch, ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_READ_IMAGE_ERR);
 
@@ -5471,7 +5473,7 @@ public:
         ::size_t row_pitch,
         ::size_t slice_pitch,
         void* ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5479,8 +5481,7 @@ public:
             ::clEnqueueWriteImage(
                 object_, image(), blocking, (const ::size_t *) origin,
                 (const ::size_t *) region, row_pitch, slice_pitch, ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_WRITE_IMAGE_ERR);
 
@@ -5496,7 +5497,7 @@ public:
         const size_t<3>& src_origin,
         const size_t<3>& dst_origin,
         const size_t<3>& region,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5504,8 +5505,7 @@ public:
             ::clEnqueueCopyImage(
                 object_, src(), dst(), (const ::size_t *) src_origin,
                 (const ::size_t *)dst_origin, (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_COPY_IMAGE_ERR);
 
@@ -5528,7 +5528,7 @@ public:
         cl_float4 fillColor,
         const size_t<3>& origin,
         const size_t<3>& region,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5539,8 +5539,7 @@ public:
                 static_cast<void*>(&fillColor), 
                 (const ::size_t *) origin, 
                 (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_FILL_IMAGE_ERR);
 
@@ -5562,7 +5561,7 @@ public:
         cl_int4 fillColor,
         const size_t<3>& origin,
         const size_t<3>& region,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5573,8 +5572,7 @@ public:
                 static_cast<void*>(&fillColor), 
                 (const ::size_t *) origin, 
                 (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_FILL_IMAGE_ERR);
 
@@ -5596,7 +5594,7 @@ public:
         cl_uint4 fillColor,
         const size_t<3>& origin,
         const size_t<3>& region,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5607,8 +5605,7 @@ public:
                 static_cast<void*>(&fillColor), 
                 (const ::size_t *) origin, 
                 (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
                 __ENQUEUE_FILL_IMAGE_ERR);
 
@@ -5625,7 +5622,7 @@ public:
         const size_t<3>& src_origin,
         const size_t<3>& region,
         ::size_t dst_offset,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5633,8 +5630,7 @@ public:
             ::clEnqueueCopyImageToBuffer(
                 object_, src(), dst(), (const ::size_t *) src_origin,
                 (const ::size_t *) region, dst_offset,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_COPY_IMAGE_TO_BUFFER_ERR);
 
@@ -5650,7 +5646,7 @@ public:
         ::size_t src_offset,
         const size_t<3>& dst_origin,
         const size_t<3>& region,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5658,8 +5654,7 @@ public:
             ::clEnqueueCopyBufferToImage(
                 object_, src(), dst(), src_offset,
                 (const ::size_t *) dst_origin, (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_COPY_BUFFER_TO_IMAGE_ERR);
 
@@ -5675,15 +5670,14 @@ public:
         cl_map_flags flags,
         ::size_t offset,
         ::size_t size,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL,
         cl_int* err = NULL) const
     {
         cl_int error;
         void * result = ::clEnqueueMapBuffer(
             object_, buffer(), blocking, flags, offset, size,
-            (events != NULL) ? (cl_uint) events->size() : 0,
-            (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+            (cl_uint) events.second, (cl_event *) events.first,
             (cl_event*) event,
             &error);
 
@@ -5702,7 +5696,7 @@ public:
         const size_t<3>& region,
         ::size_t * row_pitch,
         ::size_t * slice_pitch,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL,
         cl_int* err = NULL) const
     {
@@ -5711,8 +5705,7 @@ public:
             object_, buffer(), blocking, flags,
             (const ::size_t *) origin, (const ::size_t *) region,
             row_pitch, slice_pitch,
-            (events != NULL) ? (cl_uint) events->size() : 0,
-            (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+            (cl_uint) events.second, (cl_event *) events.first,
             (cl_event*) event,
             &error);
 
@@ -5726,15 +5719,14 @@ public:
     cl_int enqueueUnmapMemObject(
         const Memory& memory,
         void* mapped_ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
         cl_int err = detail::errHandler(
             ::clEnqueueUnmapMemObject(
                 object_, memory(), mapped_ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_UNMAP_MEM_OBJECT_ERR);
 
@@ -5757,15 +5749,14 @@ public:
      * have completed.
      */
     cl_int enqueueMarkerWithWaitList(
-        const VECTOR_CLASS<Event> *events = 0,
+        const event_list_t &events = empty_event_list,
         Event *event = 0)
     {
         cl_event tmp;
         cl_int err = detail::errHandler(
             ::clEnqueueMarkerWithWaitList(
                 object_,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_MARKER_WAIT_LIST_ERR);
 
@@ -5787,15 +5778,14 @@ public:
      * before this command to command_queue, have completed.
      */
     cl_int enqueueBarrierWithWaitList(
-        const VECTOR_CLASS<Event> *events = 0,
+        const event_list_t &events = empty_event_list,
         Event *event = 0)
     {
         cl_event tmp;
         cl_int err = detail::errHandler(
             ::clEnqueueBarrierWithWaitList(
                 object_,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_BARRIER_WAIT_LIST_ERR);
 
@@ -5812,7 +5802,7 @@ public:
     cl_int enqueueMigrateMemObjects(
         const VECTOR_CLASS<Memory> &memObjects,
         cl_mem_migration_flags flags,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL
         )
     {
@@ -5830,8 +5820,7 @@ public:
                 (cl_uint)memObjects.size(), 
                 static_cast<const cl_mem*>(localMemObjects),
                 flags,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_UNMAP_MEM_OBJECT_ERR);
 
@@ -5847,7 +5836,7 @@ public:
         const NDRange& offset,
         const NDRange& global,
         const NDRange& local = NullRange,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
@@ -5857,8 +5846,7 @@ public:
                 offset.dimensions() != 0 ? (const ::size_t*) offset : NULL,
                 (const ::size_t*) global,
                 local.dimensions() != 0 ? (const ::size_t*) local : NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_NDRANGE_KERNEL_ERR);
 
@@ -5870,15 +5858,14 @@ public:
 
     cl_int enqueueTask(
         const Kernel& kernel,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_event tmp;
         cl_int err = detail::errHandler(
             ::clEnqueueTask(
                 object_, kernel(),
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_TASK_ERR);
 
@@ -5893,7 +5880,7 @@ public:
         std::pair<void*, ::size_t> args,
         const VECTOR_CLASS<Memory>* mem_objects = NULL,
         const VECTOR_CLASS<const void*>* mem_locs = NULL,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL) const
     {
         cl_mem * mems = (mem_objects != NULL && mem_objects->size() > 0) 
@@ -5913,8 +5900,7 @@ public:
                 (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
                 mems,
                 (mem_locs != NULL) ? (const void **) &mem_locs->front() : NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_NATIVE_KERNEL);
 
@@ -5950,7 +5936,7 @@ public:
 
     cl_int enqueueAcquireGLObjects(
          const VECTOR_CLASS<Memory>* mem_objects = NULL,
-         const VECTOR_CLASS<Event>* events = NULL,
+         const event_list_t &events = empty_event_list,
          Event* event = NULL) const
      {
         cl_event tmp;
@@ -5959,8 +5945,7 @@ public:
                  object_,
                  (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
                  (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
-                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                 (cl_uint) events.second, (cl_event *) events.first,
                  (event != NULL) ? &tmp : NULL),
              __ENQUEUE_ACQUIRE_GL_ERR);
 
@@ -5972,7 +5957,7 @@ public:
 
     cl_int enqueueReleaseGLObjects(
          const VECTOR_CLASS<Memory>* mem_objects = NULL,
-         const VECTOR_CLASS<Event>* events = NULL,
+         const event_list_t &events = empty_event_list,
          Event* event = NULL) const
      {
         cl_event tmp;
@@ -5981,8 +5966,7 @@ public:
                  object_,
                  (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
                  (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
-                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                 (cl_uint) events.second, (cl_event *) events.first,
                  (event != NULL) ? &tmp : NULL),
              __ENQUEUE_RELEASE_GL_ERR);
 
@@ -6004,7 +5988,7 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
 
     cl_int enqueueAcquireD3D10Objects(
          const VECTOR_CLASS<Memory>* mem_objects = NULL,
-         const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
          Event* event = NULL) const
     {
         static PFN_clEnqueueAcquireD3D10ObjectsKHR pfn_clEnqueueAcquireD3D10ObjectsKHR = NULL;
@@ -6024,8 +6008,7 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
                  object_,
                  (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
                  (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
-                 (events != NULL) ? (cl_event*) &events->front() : NULL,
+                 (cl_uint) events.second, (cl_event *) events.first,
                  (event != NULL) ? &tmp : NULL),
              __ENQUEUE_ACQUIRE_GL_ERR);
 
@@ -6037,7 +6020,7 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
 
     cl_int enqueueReleaseD3D10Objects(
          const VECTOR_CLASS<Memory>* mem_objects = NULL,
-         const VECTOR_CLASS<Event>* events = NULL,
+         const event_list_t &events = empty_event_list,
          Event* event = NULL) const
     {
         static PFN_clEnqueueReleaseD3D10ObjectsKHR pfn_clEnqueueReleaseD3D10ObjectsKHR = NULL;
@@ -6057,8 +6040,7 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
                 object_,
                 (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
                 (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL) ? (cl_event*) &events->front() : NULL,
+                (cl_uint) events.second, (cl_event *) events.first,
                 (event != NULL) ? &tmp : NULL),
             __ENQUEUE_RELEASE_GL_ERR);
 
@@ -6109,7 +6091,7 @@ inline cl_int enqueueReadBuffer(
     ::size_t offset,
     ::size_t size,
     void* ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6128,7 +6110,7 @@ inline cl_int enqueueWriteBuffer(
         ::size_t offset,
         ::size_t size,
         const void* ptr,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL)
 {
     cl_int error;
@@ -6147,7 +6129,7 @@ inline void* enqueueMapBuffer(
         cl_map_flags flags,
         ::size_t offset,
         ::size_t size,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL,
         cl_int* err = NULL)
 {
@@ -6160,8 +6142,7 @@ inline void* enqueueMapBuffer(
 
     void * result = ::clEnqueueMapBuffer(
             queue(), buffer(), blocking, flags, offset, size,
-            (events != NULL) ? (cl_uint) events->size() : 0,
-            (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+            (cl_uint) events.second, (cl_event *) events.first,
             (cl_event*) event,
             &error);
 
@@ -6175,7 +6156,7 @@ inline void* enqueueMapBuffer(
 inline cl_int enqueueUnmapMemObject(
     const Memory& memory,
     void* mapped_ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6189,8 +6170,7 @@ inline cl_int enqueueUnmapMemObject(
     cl_int err = detail::errHandler(
         ::clEnqueueUnmapMemObject(
             queue(), memory(), mapped_ptr,
-            (events != NULL) ? (cl_uint) events->size() : 0,
-            (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+            (cl_uint) events.second, (cl_event *) events.first,
             (event != NULL) ? &tmp : NULL),
         __ENQUEUE_UNMAP_MEM_OBJECT_ERR);
 
@@ -6206,7 +6186,7 @@ inline cl_int enqueueCopyBuffer(
         ::size_t src_offset,
         ::size_t dst_offset,
         ::size_t size,
-        const VECTOR_CLASS<Event>* events = NULL,
+        const event_list_t &events = empty_event_list,
         Event* event = NULL)
 {
     cl_int error;
@@ -6232,7 +6212,7 @@ inline cl_int copy( IteratorType startIterator, IteratorType endIterator, cl::Bu
     ::size_t byteLength = length*sizeof(DataType);
 
     DataType *pointer = 
-        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_WRITE, 0, byteLength, 0, 0, &error));
+        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_WRITE, 0, byteLength, empty_event_list, 0, &error));
     // if exceptions enabled, enqueueMapBuffer will throw
     if( error != CL_SUCCESS ) {
         return error;
@@ -6269,7 +6249,7 @@ inline cl_int copy( const cl::Buffer &buffer, IteratorType startIterator, Iterat
     ::size_t byteLength = length*sizeof(DataType);
 
     DataType *pointer = 
-        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, byteLength, 0, 0, &error));
+        static_cast<DataType*>(enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, byteLength, empty_event_list, 0, &error));
     // if exceptions enabled, enqueueMapBuffer will throw
     if( error != CL_SUCCESS ) {
         return error;
@@ -6297,7 +6277,7 @@ inline cl_int enqueueReadBufferRect(
     ::size_t host_row_pitch,
     ::size_t host_slice_pitch,
     void *ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6333,7 +6313,7 @@ inline cl_int enqueueWriteBufferRect(
     ::size_t host_row_pitch,
     ::size_t host_slice_pitch,
     void *ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6368,7 +6348,7 @@ inline cl_int enqueueCopyBufferRect(
     ::size_t src_slice_pitch,
     ::size_t dst_row_pitch,
     ::size_t dst_slice_pitch,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6401,7 +6381,7 @@ inline cl_int enqueueReadImage(
     ::size_t row_pitch,
     ::size_t slice_pitch,
     void* ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL) 
 {
     cl_int error;
@@ -6431,7 +6411,7 @@ inline cl_int enqueueWriteImage(
     ::size_t row_pitch,
     ::size_t slice_pitch,
     void* ptr,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6459,7 +6439,7 @@ inline cl_int enqueueCopyImage(
     const size_t<3>& src_origin,
     const size_t<3>& dst_origin,
     const size_t<3>& region,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6485,7 +6465,7 @@ inline cl_int enqueueCopyImageToBuffer(
     const size_t<3>& src_origin,
     const size_t<3>& region,
     ::size_t dst_offset,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -6511,7 +6491,7 @@ inline cl_int enqueueCopyBufferToImage(
     ::size_t src_offset,
     const size_t<3>& dst_origin,
     const size_t<3>& region,
-    const VECTOR_CLASS<Event>* events = NULL,
+    const event_list_t &events = empty_event_list,
     Event* event = NULL)
 {
     cl_int error;
@@ -12278,6 +12258,10 @@ public:
 #endif //__CL_USER_OVERRIDE_ERROR_STRINGS
 
 #undef __CL_FUNCTION_TYPE
+
+#if __cplusplus <= 199711L
+#undef empty_event_list
+#endif
 
 // Extensions
 /**
