@@ -1054,6 +1054,9 @@ private:
     ::size_t data_[N];
 
 public:
+    typedef ::size_t* iterator;
+    typedef const ::size_t* const_iterator;
+
     //! \brief Initialize size_t to all 0s
     size_t()
     {
@@ -1077,6 +1080,11 @@ public:
 
     //! \brief Conversion operator to const T*.
     operator const ::size_t* () const { return data_; }
+
+    iterator begin(){ return data_; };
+    iterator end(){ return begin() + N; };
+    const_iterator begin() const{ return data_; };
+    const_iterator end() const { return begin() + N; };
 };
 
 namespace detail {
@@ -4333,6 +4341,9 @@ private:
     cl_uint dimensions_;
 
 public:
+    typedef ::size_t* iterator;
+    typedef const ::size_t* const_iterator;
+
     //! \brief Default constructor - resulting range has zero dimensions.
     NDRange()
         : dimensions_(0)
@@ -4372,6 +4383,11 @@ public:
 
     //! \brief Queries the number of dimensions in the range.
     ::size_t dimensions() const { return dimensions_; }
+
+    iterator begin(){ return sizes_.begin(); };
+    iterator end(){ return begin() + dimensions_; };
+    const_iterator begin() const{ return sizes_.begin(); };
+    const_iterator end() const { return begin() + dimensions_; };
 };
 
 //! \brief A zero-dimensional range.
