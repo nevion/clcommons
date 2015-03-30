@@ -58,8 +58,11 @@ INLINE uint isPowerOf2(uint x){
 #define STRINGIFY2( x) #x
 #define STRINGIFY(x) STRINGIFY2(x)
 
-#define PASTE2( a, b) a##b
-#define PASTE( a, b) PASTE2( a, b)
+#define PASTE_2( a, b) a##b
+#define PASTE( a, b) PASTE_2( a, b)
+
+#define PASTE_3( a, b, c) a##b##c
+#define PASTE3( a, b, c) PASTE_3( a, b, c)
 
 uint get_workgroup_size(){
     return get_local_size(0) * get_local_size(1) * get_local_size(2);
