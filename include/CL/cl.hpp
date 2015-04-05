@@ -199,7 +199,6 @@
 #define CL_CALLBACK
 #endif //CL_CALLBACK
 
-#include <utility>
 #include <limits>
 
 #if !defined(__NO_STD_VECTOR)
