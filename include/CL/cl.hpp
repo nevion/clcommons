@@ -6882,7 +6882,7 @@ public:
             args.offset_,
             args.global_,
             args.local_,
-            &args.events_,
+            args.events_,
             &event);
         
         return event;
