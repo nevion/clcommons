@@ -1418,6 +1418,13 @@ inline cl_int getInfoHelper(Func f, cl_uint name, T* param, int, typename T::cl_
     F(cl_device_info, CL_DEVICE_PARTITION_STYLE_EXT, VECTOR_CLASS<cl_device_partition_property_ext>)
 #endif // USE_CL_DEVICE_FISSION
 
+#ifdef CL_VERSION_2_0
+#define __PARAM_NAME_INFO_2_0(F) \
+    F(cl_device_info, CL_DEVICE_, STRING_CLASS) \
+    F(CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE, cl_uint) \
+    F(CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE)
+#endif
+
 template <typename enum_type, cl_int Name>
 struct param_traits {};
 
