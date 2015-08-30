@@ -2662,7 +2662,8 @@ struct event_list_t{
     typedef const Event* const_iterator;
 
     constexpr event_list_t(Event *events, ::size_t n_events):events(events), n_events(n_events){}
-    event_list_t(const VECTOR_CLASS<Event> &events):events(const_cast<Event *>(events.data())), n_events(events.size()){}
+    template<typename ContiguousContainerT>
+    event_list_t(const ContiguousContainerT &events):events(events.size() ? const_cast<Event *>(events.data()) : NULL), n_events(events.size()){}
 
     inline iterator begin(){ return events; };
     iterator end();
