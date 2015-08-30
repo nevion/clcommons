@@ -5157,6 +5157,22 @@ public:
         }
     }
 
+    CommandQueue(
+        const Context& context,
+        const Device& device,
+        cl_queue_properties *properties = nullptr,
+        cl_int* err = NULL)
+    {
+        cl_int error;
+        object_ = ::clCreateCommandQueueWithProperties(
+            context(), device(), properties, &error);
+
+        detail::errHandler(error, __CREATE_COMMAND_QUEUE_ERR);
+        if (err != NULL) {
+            *err = error;
+        }
+    }
+
     static CommandQueue getDefault(cl_int * err = NULL)
     {
         int state = detail::compare_exchange(
@@ -5195,7 +5211,7 @@ public:
         else {
             Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0];
 
-            default_ = CommandQueue(context, device, 0, &error);
+            default_ = CommandQueue(context, device, nullptr, &error);
 
             detail::errHandler(error, __CREATE_COMMAND_QUEUE_ERR);
             if (err != NULL) {
